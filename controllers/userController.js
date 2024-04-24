@@ -45,7 +45,8 @@ export const register = async (req,res) => {
         user = new User({
             email,
             password : hashedPassword,
-            username
+            username,
+            quizzes : []
         })
         await user.save()
         let token = createToken(user._id)

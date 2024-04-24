@@ -1,5 +1,6 @@
 import Quiz from '../models/quizSchema.js';
 import { conductQuiz } from '../sockets/rooms.js';
+import User from '../models/userSchema.js';
 
 const generateRandomCode = () =>{
     // Generate a random code in this format : "***-***-***" where * is a random alphabet in lowercase
@@ -18,14 +19,21 @@ const generateRandomCode = () =>{
 
 export const createQuiz = async (req, res) => {
     try {
-        let { title, questions} = req.body;
+        let { title, questions, startTime} = req.body;
         if (!title || !questions) {
             return res.json({ error: true, message: "Please enter all fields" });
         }
+        let time;
+        try {
+            time  = new Date(startTime)
+        } catch (err) { console.trace() }
         let quiz = new Quiz({
             title,
-            questions
+            questions,
         });
+        if(time){
+            quiz.startTime = time
+        }
         quiz.creatorID = req.user.id;
         let code = generateRandomCode();
         let otherQuiz = await Quiz.findOne({ code });
@@ -33,6 +41,8 @@ export const createQuiz = async (req, res) => {
             code = generateRandomCode();
             otherQuiz = await Quiz.findOne({ code });
         }
+        let user = await User.findById(req.user.id)
+        user.quizzes.push(code)
         quiz.code = code;
         await quiz.save();
         res.json({ error: false, quiz });
