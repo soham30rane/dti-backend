@@ -1,5 +1,8 @@
 import { Server } from "socket.io";
 import { joinRoom } from "./rooms.js";
+import jwt from "jsonwebtoken";
+import Quiz from "../models/quizSchema.js"
+import {recieveAnswer } from "../quiz/logic.js"
 
 let io;
 
@@ -19,7 +22,14 @@ export const initSockets = (httpServer) =>{
         socket.on('join-room',(roomCode,token) => {
             joinRoom(socket,roomCode,token);
         })
+
+
+        socket.on('answer', async (roomCode,questionIndex,answer,token) => {
+            console.log('Answer received');
+            recieveAnswer(roomCode,questionIndex,answer,token)  
+        })
     });
+
 }
 
 export const getIO = () => {
