@@ -33,6 +33,15 @@ export const conductQuiz = async (roomCode) => {
         let questions = quiz.questions;
         let time = 10;
         let q_index = 0;
+        
+        io.to(roomCode).emit('question',questions[q_index],q_index);
+        q_index++;
+        await new Promise(resolve => setTimeout(resolve, 10000));
+        // Emit results
+        io.to(roomCode).emit("question-ended",q_index)
+        console.log("Sending results")
+        quiz = await Quiz.findOne({ code : roomCode })
+        io.to(roomCode).emit('results',makeLeaderBoard(quiz));
 
         let interval = setInterval( async () => {
             // Emit question
@@ -50,7 +59,7 @@ export const conductQuiz = async (roomCode) => {
             console.log("Sending results")
             quiz = await Quiz.findOne({ code : roomCode })
             io.to(roomCode).emit('results',makeLeaderBoard(quiz));
-        }, time * 1000);
+        }, 20000);
     } catch (err) {
         console.log(err.message);
     }

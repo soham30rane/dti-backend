@@ -19,7 +19,7 @@ const generateRandomCode = () =>{
 
 export const createQuiz = async (req, res) => {
     try {
-        let { title, questions, startTime} = req.body;
+        let { title, questions} = req.body;
         if (!title || !questions) {
             return res.json({ error: true, message: "Please enter all fields" });
         }
@@ -31,9 +31,6 @@ export const createQuiz = async (req, res) => {
             title,
             questions,
         });
-        if(time){
-            quiz.startTime = time
-        }
         quiz.creatorID = req.user.id;
         let code = generateRandomCode();
         let otherQuiz = await Quiz.findOne({ code });
