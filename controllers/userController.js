@@ -1,11 +1,23 @@
 import User from '../models/userSchema.js'
 import bcrypt from 'bcryptjs'
 import jwt from 'jsonwebtoken'
+import Quiz from '../models/quizSchema.js'
 // import dotenv from 'dotenv'
 // dotenv.config()
 
 let createToken = (_id) => {
     return jwt.sign({ _id }, process.env.SECRET)
+}
+
+export const quizes = async (req,res) => {
+    try {
+        let quizes = await Quiz.find({ creatorID : req.user.id})
+        res.json({ error : false , quizes })
+    }
+    catch(err) {
+        console.log(err.message)
+        res.json({ error : true , message : "Server error"})
+    }
 }
 
 export const login = async (req, res) => {
@@ -51,6 +63,18 @@ export const register = async (req,res) => {
         await user.save()
         let token = createToken(user._id)
         res.json({ error : false ,token, user : { _id : user._id, email : user.email, username : user.username }})
+    } catch(err) {
+        console.log(err.message)
+        res.json({ error : true , message : "Server error"})
+    }
+}
+
+export const profile = async (req,res) => {
+    try {
+        const userId = (jwt.verify(req.header('authorization'),process.env.SECRET));
+        console.log(userId)
+        let user = await User.findById(userId._id).select('-password')
+        res.json({ error : false , user })
     } catch(err) {
         console.log(err.message)
         res.json({ error : true , message : "Server error"})
