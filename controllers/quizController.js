@@ -42,6 +42,7 @@ export const createQuiz = async (req, res) => {
         user.quizzes.push(code)
         quiz.code = code;
         await quiz.save();
+        await user.save();
         res.json({ error: false, quiz });
     } catch (err) {
         console.log(err.message);

@@ -74,7 +74,12 @@ export const profile = async (req,res) => {
         const userId = (jwt.verify(req.header('authorization'),process.env.SECRET));
         console.log(userId)
         let user = await User.findById(userId._id).select('-password')
-        res.json({ error : false , user })
+        let quizzes = await Promise.all(user.quizzes.map(async element => {
+            return await Quiz.find({code: element});
+        }));
+        console.log(quizzes)
+        user.quizzes = quizzes;
+        res.json({ error : false , user,quizzes })
     } catch(err) {
         console.log(err.message)
         res.json({ error : true , message : "Server error"})
