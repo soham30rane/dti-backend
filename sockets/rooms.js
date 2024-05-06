@@ -6,7 +6,7 @@ import { addParticipant,makeLeaderBoard } from "../quiz/logic.js"
 
 export const joinRoom = async (socket,roomCode,token) => {
     try {
-        let res = addParticipant(roomCode,token)
+        let res = await addParticipant(socket,roomCode,token)
         if(res){
             console.log("New user joined room : " , roomCode)
             socket.join(roomCode)

@@ -23,16 +23,16 @@ export const recieveAnswer = async (roomCode,q_index,a_index,token) => {
     await quiz.save();
 }
 
-export const addParticipant = async (roomCode,token) => {
+export const addParticipant = async (socket,roomCode,token) => {
     // verify the token
     let verified = jwt.verify(token,process.env.SECRET)
-    if(!verified){ console.log("Invalid token : ",token);console.trace();return false}
+    if(!verified){ socket.emit('login-required');console.log("Invalid token : ",token);console.trace();return false}
     // find the quiz
     let quiz = await Quiz.findOne({code : roomCode})
-    if(!quiz) { console.log("Quiz not found : " ,roomCode),console.trace();return false}
+    if(!quiz) { socket.emit('quiz-not-found');console.log("Quiz not found : " ,roomCode),console.trace();return false}
     // find user
     let user = await User.findById(verified._id)
-    if(!user) { console.log("User not found :",verified._id);console.trace();return false}
+    if(!user) { socket.emit('login-required');console.log("User not found :",verified._id);console.trace();return false}
     // Check if already exists and add
     let existing = quiz.participants.find(ptp => ptp.participantID == user._id)
     if(existing){
