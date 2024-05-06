@@ -1,6 +1,7 @@
 import Quiz from '../models/quizSchema.js';
 import { conductQuiz } from '../sockets/rooms.js';
 import User from '../models/userSchema.js';
+import { makeLeaderBoard } from '../quiz/logic.js';
 
 const generateRandomCode = () =>{
     // Generate a random code in this format : "***-***-***" where * is a random alphabet in lowercase
@@ -67,6 +68,23 @@ export const startQuiz = async (req, res) => {
         await quiz.save();
         conductQuiz(code);
         res.json({ error: false, message: "Quiz started" });
+    } catch (err) {
+        console.log(err.message);
+        res.json({ error: true, message: "Server error" });
+    }
+}
+
+export const getLeaderBoard = async (req,res) => {
+    try {
+        let { code } = req.body;
+        if (!code) {
+            return res.json({ error: true, message: "Please enter all fields" });
+        }
+        let quiz = await Quiz.findOne({ code });
+        if (!quiz) {
+            return res.json({ error: true, message: "Quiz not found" });
+        }
+        res.json({ error: false, data : makeLeaderBoard(quiz) });
     } catch (err) {
         console.log(err.message);
         res.json({ error: true, message: "Server error" });

@@ -6,11 +6,16 @@ import { addParticipant,makeLeaderBoard } from "../quiz/logic.js"
 
 export const joinRoom = async (socket,roomCode,token) => {
     try {
-        let res = await addParticipant(socket,roomCode,token)
+        let {res,isRunning,title} = await addParticipant(socket,roomCode,token)
         if(res){
             console.log("New user joined room : " , roomCode)
             socket.join(roomCode)
-            socket.emit("room-joined",roomCode)
+            socket.emit("room-joined",roomCode,title)
+            if(isRunning){
+                socket.emit('get-ready')
+            } else {
+                socket.emit("not-started")
+            }
         } else {
             console.log("Cannot join room : ",roomCode,token)
         }
@@ -34,22 +39,36 @@ export const conductQuiz = async (roomCode) => {
         let time = 10;
         let q_index = 0;
         
-        io.to(roomCode).emit('question',questions[q_index],q_index);
-        q_index++;
-        await new Promise(resolve => setTimeout(resolve, 10000));
-        // Emit results
-        io.to(roomCode).emit("question-ended",q_index)
-        console.log("Sending results")
-        quiz = await Quiz.findOne({ code : roomCode })
-        io.to(roomCode).emit('results',makeLeaderBoard(quiz));
+        console.log('emitting get ready')
+        io.to(roomCode).emit('get-ready')
+        setTimeout(()=>{
+            console.log('emitting question : ',questions[q_index])
+            io.to(roomCode).emit('question',questions[q_index],q_index);
+            q_index++;
+            setTimeout(async ()=>{
+                // Emit results
+                io.to(roomCode).emit("question-ended",q_index)
+                console.log("Sending results")
+                quiz = await Quiz.findOne({ code : roomCode })
+                io.to(roomCode).emit('results',makeLeaderBoard(quiz));
+            },10000)
+        },5000)
 
         let interval = setInterval( async () => {
             // Emit question
             if (q_index === questions.length) {
                 clearInterval(interval);
-                io.to(roomCode).emit('quiz-ended');
+                io.to(roomCode).emit('quiz-ended',makeLeaderBoard(quiz),quiz.title);
+                quiz.completed = true
+                await quiz.save()
                 return;
             }
+
+            console.log('emitting get ready')
+            io.to(roomCode).emit('get-ready')
+            await new Promise(resolve => setTimeout(resolve, 5000));
+
+            console.log('emitting question : ',questions[q_index])
             io.to(roomCode).emit('question',questions[q_index],q_index);
             q_index++;
             await new Promise(resolve => setTimeout(resolve, 10000));
@@ -59,7 +78,7 @@ export const conductQuiz = async (roomCode) => {
             console.log("Sending results")
             quiz = await Quiz.findOne({ code : roomCode })
             io.to(roomCode).emit('results',makeLeaderBoard(quiz));
-        }, 20000);
+        }, 25000);
     } catch (err) {
         console.log(err.message);
     }

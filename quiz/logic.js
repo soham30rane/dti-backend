@@ -26,18 +26,20 @@ export const recieveAnswer = async (roomCode,q_index,a_index,token) => {
 export const addParticipant = async (socket,roomCode,token) => {
     // verify the token
     let verified = jwt.verify(token,process.env.SECRET)
-    if(!verified){ socket.emit('login-required');console.log("Invalid token : ",token);console.trace();return false}
+    if(!verified){ socket.emit('login-required');console.log("Invalid token : ",token);console.trace();return {res : false}}
     // find the quiz
     let quiz = await Quiz.findOne({code : roomCode})
-    if(!quiz) { socket.emit('quiz-not-found');console.log("Quiz not found : " ,roomCode),console.trace();return false}
+    if(!quiz) { socket.emit('quiz-not-found');console.log("Quiz not found : " ,roomCode),console.trace();return {res : false}}
+    // Check if the quiz is completed
+    if(quiz.completed){ socket.emit('quiz-ended',makeLeaderBoard(quiz),quiz.title); return { res : false };}
     // find user
     let user = await User.findById(verified._id)
-    if(!user) { socket.emit('login-required');console.log("User not found :",verified._id);console.trace();return false}
+    if(!user) { socket.emit('login-required');console.log("User not found :",verified._id);console.trace();return {res : false}}
     // Check if already exists and add
     let existing = quiz.participants.find(ptp => ptp.participantID == user._id)
     if(existing){
         console.log("User already exists")
-        return true;
+        return { res : true,isRunning : quiz.started,title:quiz.title };
     } else {
         quiz.participants.push({
             participantID : user._id,
@@ -47,7 +49,7 @@ export const addParticipant = async (socket,roomCode,token) => {
         })
         quiz.markModified("participants")
         await quiz.save()
-        return true;
+        return { res : true,isRunning : quiz.started,title:quiz.title };
     }
 }
 
