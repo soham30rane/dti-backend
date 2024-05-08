@@ -52,7 +52,9 @@ export const conductQuiz = async (roomCode) => {
                 quiz = await Quiz.findOne({ code : roomCode })
                 io.to(roomCode).emit('results',makeLeaderBoard(quiz));
             },10000)
-        },5000)
+        },10000)
+
+        await new Promise(resolve => setTimeout(resolve, 5000));
 
         let interval = setInterval( async () => {
             // Emit question
