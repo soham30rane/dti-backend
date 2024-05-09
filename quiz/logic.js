@@ -28,6 +28,7 @@ export const recieveAnswer = async (roomCode,q_index,a_index,token) => {
 
 export const addParticipant = async (socket,roomCode,token) => {
     // verify the token
+    if(!token){ socket.emit('login-required');console.log("Token not found : ",token);console.trace();return {res : false} }
     let verified = jwt.verify(token,process.env.SECRET)
     if(!verified){ socket.emit('login-required');console.log("Invalid token : ",token);console.trace();return {res : false}}
     // find the quiz
