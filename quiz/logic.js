@@ -10,8 +10,11 @@ export const recieveAnswer = async (roomCode,q_index,a_index,token) => {
     let quiz = await Quiz.findOne({code : roomCode})
     if(!quiz) { console.log("Quiz not found , code: ",roomCode); console.trace();return }
     // check if user is the participant
-    let participant = quiz.participants.find(ptp => ptp.participantID == verified._id)
+    let participant =  quiz.participants.find(ptp => ptp.participantID == verified._id)
     if(!participant){ console.log("Participant not found , params : ",roomCode,token);console.trace();return }
+    // Check if the user has already answered the questions
+    let old_ans = participant.answers.find(item => item.q_index == q_index)
+    if(old_ans){ console.log("Question is already answered : ",roomCode,token,q_index);console.trace();return }
     // update the participant object
     participant.answers.push({q_index,a_index})
     if(quiz.questions[q_index].correctIndex == a_index){
