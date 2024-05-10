@@ -24,9 +24,9 @@ export const initSockets = (httpServer) =>{
         })
 
 
-        socket.on('answer', async (roomCode,questionIndex,answer,token) => {
+        socket.on('answer', async (roomCode,questionIndex,answer,token,delta) => {
             console.log('Answer received');
-            recieveAnswer(roomCode,questionIndex,answer,token)  
+            recieveAnswer(roomCode,questionIndex,answer,token,delta)  
         })
     });
 

@@ -1,8 +1,9 @@
+import mongoose, { Mongoose } from "mongoose";
 import Quiz from "../models/quizSchema.js";
 import User from "../models/userSchema.js";
 import jwt from "jsonwebtoken"
 
-export const recieveAnswer = async (roomCode,q_index,a_index,token) => {
+export const recieveAnswer = async (roomCode,q_index,a_index,token,delta) => {
     // verify the jwt
     let verified = jwt.verify(token,process.env.SECRET)
     if(!verified){ console.log("User auth failed : ",token); console.trace();return }
@@ -18,12 +19,43 @@ export const recieveAnswer = async (roomCode,q_index,a_index,token) => {
     // update the participant object
     participant.answers.push({q_index,a_index})
     if(quiz.questions[q_index].correctIndex == a_index){
-        participant.score += quiz.questions[q_index].points
+        let score = Math.floor(quiz.questions[q_index].points + quiz.questions[q_index].points*delta)
+        console.log(delta)
+        participant.score += score
     }
-    // save to database
-    console.log(quiz)
-    quiz.markModified("participants")
-    await quiz.save();
+
+    let attempts = 10;
+    let done = false
+    while(attempts > 0 && !done){
+        try{
+            try {
+                // save to database
+                // console.log(quiz)
+                quiz.markModified("participants")
+                await quiz.save();
+                done = true
+            } catch (err){
+                if( err instanceof mongoose.Error.VersionError ){
+                    quiz = await Quiz.find({code : roomCode})
+                    participant =  quiz.participants.find(ptp => ptp.participantID == verified._id)
+                    participant.answers.push({q_index,a_index})
+                    if(quiz.questions[q_index].correctIndex == a_index){
+                        score = Math.floor(quiz.questions[q_index].points + quiz.questions[q_index].points*delta)
+                        console.log(delta)
+                        participant.score += score
+                    }
+                    quiz.markModified("participants")
+                    await quiz.save();
+                    done = true
+                } else {
+                    console.log(err)
+                    break;
+                }
+            }
+        } catch (err){
+            attempts--
+        }
+    }
 }
 
 export const addParticipant = async (socket,roomCode,token) => {
