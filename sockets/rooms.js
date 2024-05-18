@@ -3,14 +3,28 @@ import User from "../models/userSchema.js";
 import jwt from "jsonwebtoken";
 import { getIO } from "./sockets.js";
 import { addParticipant,makeLeaderBoard } from "../quiz/logic.js"
+import { incLiveCount,dcrLiveCount, getOnlineCount } from "../quiz/liveCount.js";
+
+export const leaveRoom = async (socket,roomCode,token) => {
+    if(!token){console.log('Token not found');console.trace();return false}
+    let verified = jwt.verify(token,process.env.SECRET)
+    if(!verified){ console.log("Invalid token");console.trace();return false}
+    let user = await User.findById(verified._id)
+    if(!user) { console.log("User not found :",verified._id);console.trace();return false}
+    dcrLiveCount(roomCode,user._id)
+    // console.log('dcrlivecount executed')
+    socket.leave(roomCode)
+}
 
 export const joinRoom = async (socket,roomCode,token) => {
     try {
-        let {res,isRunning,title} = await addParticipant(socket,roomCode,token)
+        let {res,isRunning,title,userid} = await addParticipant(socket,roomCode,token)
         if(res){
             console.log("New user joined room : " , roomCode)
             socket.join(roomCode)
-            socket.emit("room-joined",roomCode,title)
+            // console.log('inclivecount executed')
+            incLiveCount(roomCode,userid)
+            socket.emit("room-joined",roomCode,title,getOnlineCount(roomCode))
             if(isRunning){
                 socket.emit('get-ready')
             } else {

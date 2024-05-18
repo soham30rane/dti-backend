@@ -1,5 +1,5 @@
 import { Server } from "socket.io";
-import { joinRoom } from "./rooms.js";
+import { joinRoom, leaveRoom } from "./rooms.js";
 import jwt from "jsonwebtoken";
 import Quiz from "../models/quizSchema.js"
 import {recieveAnswer } from "../quiz/logic.js"
@@ -14,13 +14,18 @@ export const initSockets = (httpServer) =>{
         }
       });
     io.on('connection', (socket) => {
-        console.log('New connection');        
+        console.log('New connection'); 
         socket.on('disconnect', () => {
             console.log('User disconnected');
         });
 
         socket.on('join-room',(roomCode,token) => {
             joinRoom(socket,roomCode,token);
+        })
+
+        socket.on('leave-the-room',(roomCode,token) => {
+            console.log('leave room recieved : ',roomCode,' , ',token)
+            leaveRoom(socket,roomCode,token)
         })
 
 

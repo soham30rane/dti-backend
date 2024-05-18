@@ -18,7 +18,7 @@ export const auth = async (req, res, next) => {
             return res.json({ error : true , message : "User does not exist"})
         }
         req.user = user
-        console.log(req.user)
+        // console.log(req.user)
         next()
     } catch(err) {
         console.log(err.message)

@@ -2,6 +2,7 @@ import User from '../models/userSchema.js'
 import bcrypt from 'bcryptjs'
 import jwt from 'jsonwebtoken'
 import Quiz from '../models/quizSchema.js'
+import { getOnlineCount } from '../quiz/liveCount.js'
 // import dotenv from 'dotenv'
 // dotenv.config()
 
@@ -58,7 +59,8 @@ export const register = async (req,res) => {
             email,
             password : hashedPassword,
             username,
-            quizzes : []
+            quizzes : [],
+            otherQuizzes : []
         })
         await user.save()
         let token = createToken(user._id)
@@ -77,10 +79,30 @@ export const profile = async (req,res) => {
         let quizes = [] 
         for(let i=0;i<user.quizzes.length;i++){
             let quiz = await Quiz.findOne({ code : user.quizzes[i]})
-            quizes.push(quiz)
+            let resQuiz = {...quiz.toObject(),onlineCount : getOnlineCount(quiz.code)}
+            quizes.push(resQuiz)
         }
-        console.log('quizzes : ' , quizes)
-        res.json({ error : false , user,quizes })
+        let otherQuizzes = []
+        for(let i=0;i<user.otherQuizzes.length;i++){
+            try {
+                let otherQuiz = await Quiz.findOne({ code : user.otherQuizzes[i] })
+                otherQuizzes.push({
+                    code : otherQuiz.code,
+                    title : otherQuiz.title,
+                    started : otherQuiz.started,
+                    completed : otherQuiz.completed,
+                    onlineCount : getOnlineCount(otherQuiz.code)
+                })
+            } catch(err) {
+                // quiz might have been deleted
+                user.otherQuizzes.splice(i,1)
+                user.markModified('otherQuizzes')
+                await user.save()
+            }
+        }
+        // console.log('quizzes : ' , quizes)
+        // console.log('\nOTHER QUIZES : ',otherQuizzes)
+        res.json({ error : false , user,quizes,otherQuizzes })
     } catch(err) {
         console.log(err.message)
         res.json({ error : true , message : "Server error"})

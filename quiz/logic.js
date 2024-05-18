@@ -75,7 +75,7 @@ export const addParticipant = async (socket,roomCode,token) => {
     let existing = quiz.participants.find(ptp => ptp.participantID == user._id)
     if(existing){
         console.log("User already exists")
-        return { res : true,isRunning : quiz.started,title:quiz.title };
+        return { res : true,isRunning : quiz.started,title:quiz.title,userid : user._id };
     } else {
         quiz.participants.push({
             participantID : user._id,
@@ -85,7 +85,14 @@ export const addParticipant = async (socket,roomCode,token) => {
         })
         quiz.markModified("participants")
         await quiz.save()
-        return { res : true,isRunning : quiz.started,title:quiz.title };
+        let resultObj = { res : true,isRunning : quiz.started,title:quiz.title,userid : user._id } 
+        // Add the quiz code to user object
+        if(user.quizzes.includes(quiz.code)){ return resultObj; }
+        if(user.otherQuizzes.includes(quiz.code)){ return resultObj; }
+        user.otherQuizzes.unshift(quiz.code)
+        user.markModified('otherQuizzes')
+        await user.save();
+        return resultObj;
     }
 }
 

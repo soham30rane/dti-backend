@@ -16,7 +16,8 @@ let userSchema=new mongoose.Schema({
     type:String,
     required:true
   },
-  quizzes : [{type : String}], 
+  quizzes : [{type : String}],
+  otherQuizzes : [{type : String}]
 })
 
 export default mongoose.model('User',userSchema)

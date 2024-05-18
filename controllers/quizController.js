@@ -40,7 +40,7 @@ export const createQuiz = async (req, res) => {
             otherQuiz = await Quiz.findOne({ code });
         }
         let user = await User.findById(req.user.id)
-        user.quizzes.push(code)
+        user.quizzes.unshift(code)
         quiz.code = code;
         await quiz.save();
         await user.save();
