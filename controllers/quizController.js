@@ -17,6 +17,33 @@ const generateRandomCode = () =>{
     return code;
 }
 
+export const editQuiz = async (req,res) => {
+    try {
+        let { title, questions,quizCode} = req.body;
+        if (!title || !questions || !quizCode) {
+            return res.json({ error: true, message: "Please enter all fields" });
+        }
+        let quiz = await Quiz.findOne({ code : quizCode })
+        if(!quiz) {
+            return res.json({error : true , message : "Original quiz not found"})
+        }
+        if(quiz.started){
+            return res.json({ error : true , message : "Cant edit"})
+        }
+        console.log(`${req.user._id} === ${quiz.creatorID.toString()}`)
+        if(quiz.creatorID.toString() !== req.user.id) {
+            return res.json({ error : true , message : "Unauthorised" })
+        }
+        quiz.title = title;
+        quiz.questions = questions;
+        await quiz.save();
+        return res.json({ error: false, quiz });
+    } catch (err) {
+        console.log(err.message);
+        return res.json({ error: true, message: "Server error" });
+    }
+}
+
 export const deleteQuiz = async (req,res) => {
     try {
         let { code } = req.body
@@ -68,10 +95,6 @@ export const createQuiz = async (req, res) => {
         if (!title || !questions) {
             return res.json({ error: true, message: "Please enter all fields" });
         }
-        let time;
-        try {
-            time  = new Date(startTime)
-        } catch (err) { console.trace() }
         let quiz = new Quiz({
             title,
             questions,
