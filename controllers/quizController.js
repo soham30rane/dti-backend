@@ -17,6 +17,50 @@ const generateRandomCode = () =>{
     return code;
 }
 
+export const deleteQuiz = async (req,res) => {
+    try {
+        let { code } = req.body
+        if (!code) { return res.json({ error: true, message: "Please enter all fields" }); }
+        let quiz = await Quiz.findOne({ code });
+        if (!quiz) { return res.json({ error: true, message: "Quiz not found" }); }
+        if (quiz.creatorID.toString() !== req.user.id) { return res.json({ error: true, message: "Unauthorized" }); }
+        if(quiz.started && !quiz.completed){
+            return res.json({ error : true, message : "Can't delete when quiz is live"})
+        }
+
+        // Delete the quiz code from all participants quiz list
+        for(let i=0;i<quiz.participants.length;i++){
+            let ptp = quiz.participants[i]
+            if(ptp.participantID == quiz.creatorID){
+                continue
+            }
+            let user = await User.findOne({_id : ptp.participantID})
+            if(user){
+                let index = user.otherQuizzes.indexOf(code)
+                if(index !== -1){
+                    user.otherQuizzes.splice(index,1)
+                    user.markModified('otherQuizzes')
+                    await user.save()
+                }
+            }
+        }
+        // Remove it from creators list
+        let creator = await User.findById(quiz.creatorID)
+        if(creator){
+            let index = creator.quizzes.indexOf(code)
+            if(index !== -1){
+                creator.quizzes.splice(index,1)
+                creator.markModified('quizzes')
+                await creator.save()
+            }
+        }
+        await Quiz.deleteOne({_id : quiz._id})
+        return res.json({ error : false })
+    } catch (err){
+        console.log(err.message);
+        res.json({ error: true, message: "Server error" });
+    }
+}
 
 export const createQuiz = async (req, res) => {
     try {
