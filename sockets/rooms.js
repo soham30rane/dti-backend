@@ -53,48 +53,83 @@ export const conductQuiz = async (roomCode) => {
         let time = 10;
         let q_index = 0;
         
-        console.log('emitting get ready')
-        io.to(roomCode).emit('get-ready')
-        setTimeout(()=>{
-            console.log('emitting question : ',questions[q_index])
-            io.to(roomCode).emit('question',questions[q_index],q_index);
-            q_index++;
-            setTimeout(async ()=>{
-                // Emit results
-                io.to(roomCode).emit("question-ended",q_index)
-                console.log("Sending results")
-                quiz = await Quiz.findOne({ code : roomCode })
-                io.to(roomCode).emit('results',makeLeaderBoard(quiz));
-            },10000)
-        },10000)
+        // console.log('emitting get ready')
+        // io.to(roomCode).emit('get-ready')
+        // setTimeout(()=>{
+        //     console.log('emitting question : ',questions[q_index])
+        //     io.to(roomCode).emit('question',questions[q_index],q_index);
+        //     q_index++;
+        //     setTimeout(async ()=>{
+        //         // Emit results
+        //         io.to(roomCode).emit("question-ended",q_index)
+        //         console.log("Sending results")
+        //         quiz = await Quiz.findOne({ code : roomCode })
+        //         io.to(roomCode).emit('results',makeLeaderBoard(quiz));
+        //     },questions[q_index].duration*1000)
+        // },10000)
 
-        await new Promise(resolve => setTimeout(resolve, 5000));
+        // await new Promise(resolve => setTimeout(resolve, 5000));
 
-        let interval = setInterval( async () => {
-            // Emit question
+        async function emitQuestion(q_index) {
             if (q_index === questions.length) {
-                clearInterval(interval);
-                io.to(roomCode).emit('quiz-ended',makeLeaderBoard(quiz),quiz.title);
-                quiz.completed = true
-                await quiz.save()
+                io.to(roomCode).emit('quiz-ended', makeLeaderBoard(quiz), quiz.title);
+                quiz.completed = true;
+                await quiz.save();
                 return;
             }
 
-            console.log('emitting get ready')
-            io.to(roomCode).emit('get-ready')
-            await new Promise(resolve => setTimeout(resolve, 5000));
+            console.log(q_index)
+            console.log('emitting get ready');
+            io.to(roomCode).emit('get-ready');
+            let readyTime = 5000
+            if(q_index === 0){
+                readyTime = 10000
+            }
 
-            console.log('emitting question : ',questions[q_index])
-            io.to(roomCode).emit('question',questions[q_index],q_index);
-            q_index++;
-            await new Promise(resolve => setTimeout(resolve, 10000));
+            setTimeout(()=>{
+                console.log('emitting question : ', questions[q_index]);
+                io.to(roomCode).emit('question', questions[q_index], q_index);
+                const duration = questions[q_index].duration * 1000;
+                q_index++;
+        
+                setTimeout(async () => {
+                    // Emit results
+                    io.to(roomCode).emit("question-ended", q_index);
+                    console.log("Sending results");
+                    quiz = await Quiz.findOne({ code: roomCode });
+                    io.to(roomCode).emit('results', makeLeaderBoard(quiz));
+                    setTimeout(()=>{emitQuestion(q_index)},10000); // Recursively call emitQuestion for the next question
+                }, duration);
+            },readyTime)
+        }
 
-            // Emit results
-            io.to(roomCode).emit("question-ended",q_index)
-            console.log("Sending results")
-            quiz = await Quiz.findOne({ code : roomCode })
-            io.to(roomCode).emit('results',makeLeaderBoard(quiz));
-        }, 25000);
+        emitQuestion(0)
+
+        // let interval = setInterval( async () => {
+        //     // Emit question
+        //     if (q_index === questions.length) {
+        //         clearInterval(interval);
+        //         io.to(roomCode).emit('quiz-ended',makeLeaderBoard(quiz),quiz.title);
+        //         quiz.completed = true
+        //         await quiz.save()
+        //         return;
+        //     }
+
+        //     console.log('emitting get ready')
+        //     io.to(roomCode).emit('get-ready')
+        //     await new Promise(resolve => setTimeout(resolve, 5000));
+
+        //     console.log('emitting question : ',questions[q_index])
+        //     io.to(roomCode).emit('question',questions[q_index],q_index);
+        //     q_index++;
+        //     await new Promise(resolve => setTimeout(resolve, 10000));
+
+        //     // Emit results
+        //     io.to(roomCode).emit("question-ended",q_index)
+        //     console.log("Sending results")
+        //     quiz = await Quiz.findOne({ code : roomCode })
+        //     io.to(roomCode).emit('results',makeLeaderBoard(quiz));
+        // }, 25000);
     } catch (err) {
         console.log(err.message);
     }
