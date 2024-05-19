@@ -3,6 +3,7 @@ import bcrypt from 'bcryptjs'
 import jwt from 'jsonwebtoken'
 import Quiz from '../models/quizSchema.js'
 import { getOnlineCount } from '../quiz/liveCount.js'
+import { sendOtp, verifyOtp } from '../helpers/otpHelper.js'
 // import dotenv from 'dotenv'
 // dotenv.config()
 
@@ -45,14 +46,15 @@ export const login = async (req, res) => {
 
 export const register = async (req,res) => {
     try {
-        let { email, password, username } = req.body
-        if (!email || !password || !username) {
+        let { email, password, username,userOtp } = req.body
+        if (!email || !password || !username || !userOtp) {
             return res.json({ error : true , message : "Please enter all fields"})
         }
         let user = await User.findOne({ email : email })
         if (user) {
             return res.json({ error : true , message : "User already exists"})
         }
+        if(!verifyOtp(email,userOtp)){ return res.json({error : true, message : "Wrong otp, try again or refresh"}) }
         let salt = await bcrypt.genSalt(10)
         let hashedPassword = await bcrypt.hash(password, salt)
         user = new User({
@@ -74,8 +76,10 @@ export const register = async (req,res) => {
 export const profile = async (req,res) => {
     try {
         const userId = (jwt.verify(req.header('authorization'),process.env.SECRET));
+        if(!userId){ return res.json({error:true,message:'Authorisation failed'}) }
         console.log(userId)
         let user = await User.findById(userId._id).select('-password')
+        if(!user){return res.json({error:true,message:"User not found"})}
         let quizes = [] 
         for(let i=0;i<user.quizzes.length;i++){
             let quiz = await Quiz.findOne({ code : user.quizzes[i]})
@@ -106,5 +110,28 @@ export const profile = async (req,res) => {
     } catch(err) {
         console.log(err.message)
         res.json({ error : true , message : "Server error"})
+    }
+}
+
+export const sendOtpToUser = async (req,res) => {
+    try {
+        let { email } = req.body
+        if(!email) { return res.json({error:false,message:"Email required"}) }
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        if(!emailRegex.test(email)){return res.json({error:false,message:"Invalid email"})}
+        let user = await User.findOne({ email : email })
+        if (user) {
+            return res.json({ error : true , message : "User already exists"})
+        }
+        let status = await sendOtp(email)
+        if(status){
+            return res.json({error:false,message:`otp sent to ${email}`})
+        } else {
+            return res.json({error:true,message:"Unable to send email"})
+        }        
+    } catch {
+        console.log(err.message)
+        console.log("Something failed")
+        return res.json({ error : true , message : "Server error"})
     }
 }
