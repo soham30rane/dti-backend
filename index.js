@@ -8,7 +8,9 @@ import { createServer } from 'http';
 import { initSockets } from './sockets/sockets.js';
 import { auth } from './middleware/auth.js';
 import quizRoute from './routes/quizRoute.js'
-import { conductQuiz } from './sockets/rooms.js';
+import multer from 'multer';
+import { handleImageDelete, handleImgUpload } from './controllers/uploadController.js';
+const upload = multer({ dest: 'uploads/' });
 dotenv.config()
 
 const app = express();
@@ -19,6 +21,8 @@ app.use(express.json());
 
 app.use('/user',userRoute);
 app.use(auth);
+app.post('/uploadImg',upload.single('image'),handleImgUpload)
+app.post('/deleteImg',handleImageDelete)
 app.use('/quiz',quizRoute);
 
 const httpServer = createServer(app);

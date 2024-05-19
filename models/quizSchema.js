@@ -4,7 +4,8 @@ const quizSchema = new mongoose.Schema({
     title : { type: String, required: true },
     creatorID : { type : String, required : true },
     questions : [{
-            questionText : { type : String, required : true},
+            questionText : { type : String, default : ''},
+            questionImgUrl : { type : String , default:'' },
             options : [String, String, String, String],
             correctIndex : { type : Number, required : true, min : 0, max : 3},
             points : { type : Number, required : true, default : 1000 }
