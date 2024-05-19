@@ -52,7 +52,7 @@ export const register = async (req,res) => {
         }
         let user = await User.findOne({ email : email })
         if (user) {
-            return res.json({ error : true , message : "User already exists"})
+            return res.json({ error : true , message : "email already registered"})
         }
         if(!verifyOtp(email,userOtp)){ return res.json({error : true, message : "Wrong otp, try again or refresh"}) }
         let salt = await bcrypt.genSalt(10)
@@ -121,7 +121,7 @@ export const sendOtpToUser = async (req,res) => {
         if(!emailRegex.test(email)){return res.json({error:false,message:"Invalid email"})}
         let user = await User.findOne({ email : email })
         if (user) {
-            return res.json({ error : true , message : "User already exists"})
+            return res.json({ error : true , message : "email already registered"})
         }
         let status = await sendOtp(email)
         if(status){
