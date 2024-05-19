@@ -13,8 +13,13 @@ import { handleImageDelete, handleImgUpload } from './controllers/uploadControll
 const upload = multer({ dest: 'uploads/' });
 dotenv.config()
 
+const corsOptions = {
+    origin: process.env.CLIENT_URL,
+    optionsSuccessStatus: 200
+};
+
 const app = express();
-app.use(cors());
+app.use(cors(corsOptions));
 app.use(bodyParser.urlencoded({extended: true}));
 app.use(bodyParser.json({limit: '5mb'}));
 app.use(express.json());

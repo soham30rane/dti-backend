@@ -3,13 +3,15 @@ import { joinRoom, leaveRoom } from "./rooms.js";
 import jwt from "jsonwebtoken";
 import Quiz from "../models/quizSchema.js"
 import {recieveAnswer } from "../quiz/logic.js"
+import dotenv from 'dotenv'
+dotenv.config()
 
 let io;
 
 export const initSockets = (httpServer) =>{
     io = new Server(httpServer, {
         cors: {
-          origin: "*",
+          origin: process.env.CLIENT_URL,
           methods: ["GET", "POST"]
         }
       });
