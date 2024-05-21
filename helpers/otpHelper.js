@@ -53,10 +53,11 @@ export async function sendOtp(email){
         from: `${process.env.EMAIL_USERNAME}`, 
         to: email, 
         subject: 'Email verification for Quest', 
-        text: `Hi there,\n
-        Your otp for email verification is : ${otp}\n
-        This OTP is valid for 5 minutes. If you did not request this, please ignore this email.
-      `
+        html: `Hi there,<br><br>
+        This email was registered on Quest
+        Your OTP for email verification is: <b>${otp}</b><br>
+        This OTP is valid for 5 minutes. <b>If you did not request the OTP, kindly ignore this email.</b>
+    `
     };
 
     try {
