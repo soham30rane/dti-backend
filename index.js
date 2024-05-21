@@ -39,7 +39,7 @@ const httpServer = createServer(app);
 
 async function initializeServer() {
     console.log('Reseting incomplete quizzes')
-    await resetIcompleteQuizzes();
+    // await resetIcompleteQuizzes();
     
     initSockets(httpServer);
     httpServer.listen(process.env.PORT, () => {

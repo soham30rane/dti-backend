@@ -8,9 +8,9 @@ const transporter = nodemailer.createTransport({
       type: 'OAuth2', 
       user: process.env.EMAIL_USERNAME, 
       pass: process.env.EMAIL_PASSWORD, 
-      clientId: process.env.GCLOUD_CLIENT_ID, 
-      clientSecret: process.env.GCLOUD_CLIENT_SECRET, 
-      refreshToken: process.env.GCLOUD_REFRESH_TOKEN 
+      clientId: process.env.GMAIL_CLIENT_ID, 
+      clientSecret: process.env.GMAIL_CLIENT_SECRET, 
+      refreshToken: process.env.GMAIL_REFRESH_TOKEN 
     } 
   }); 
 
@@ -64,7 +64,7 @@ export async function sendOtp(email){
             transporter.sendMail(mailConfigurations, (error, info) => {
                 if (error) {
                     console.log("Error in sending email");
-                    console.log(info);
+                    console.log(error);
                     resolve(false);
                 } else {
                     console.log('Email Sent Successfully');
