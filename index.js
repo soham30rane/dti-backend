@@ -14,8 +14,16 @@ import { resetIcompleteQuizzes } from './helpers/initialize.js';
 const upload = multer({ dest: 'uploads/' });
 dotenv.config()
 
+const allowedOrigins = process.env.CLIENT_URLS
 const corsOptions = {
-    origin: process.env.CLIENT_URL,
+    origin: function (origin, callback) {
+        // Check if the origin is in the allowed origins list
+        if (allowedOrigins.indexOf(origin) !== -1) {
+            callback(null, true); // Allow the request
+        } else {
+            callback(new Error('Not allowed by CORS')); // Block the request
+        }
+    },
     optionsSuccessStatus: 200
 };
 
